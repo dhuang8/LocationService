@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<title>Where am I?</title>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map-canvas { height: 100% }
+    </style>
+    <script src="https://code.jquery.com/jquery-1.9.1.js"></script>
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB4yrmasPnJxZm9OlYvrSJNW0sDoiNUyFI">
+    </script>
+    <script type="text/javascript">
+	        
+      function initialize() {
+    	    var markers = new Array();
+    	    var infowindow = new Array();
+    		  var mapOptions = {
+    		          center: new google.maps.LatLng(40.8, -74),
+    		          zoom: 12
+    		        };
+    		        var map = new google.maps.Map(document.getElementById("map-canvas"),
+    		            mapOptions);
+    		        
+    		function addmarker(key, data){
+    			markers[key] = new google.maps.Marker({
+  	  	    	    position: new google.maps.LatLng(data['lat'], data['lng']),
+  	  	    	    map: map
+    		    	});
+  	  	        	
+		  	  	        infowindow[key] = new google.maps.InfoWindow({
+			  	  	    content: key + "<br>" + (new Date(data['time']*1000)).toLocaleString()
+		  	  	    });
+		  	  	    infowindow[key].open(map,markers[key]);
+	  	  	        google.maps.event.addListener(markers[key], 'click', function() {
+	  	  	        	infowindow[key].open(map,markers[key]);
+	  	  	 		});
+    		}
+    		
+    	  $.ajax({
+  	    	url: "http://bobdole0.byethost16.com/googlemaps/gmap.php",
+  	    	type: 'get',
+  	        dataType: 'jsonp',
+  	    	data: {get: "locdata"},
+  	    	success: function(request){
+	  	  	    var bounds = new google.maps.LatLngBounds();
+  	    		for(var key in request){
+  	    			var data=request[key];
+  	  	        	addmarker(key,data);
+	  	  	    	bounds.extend(markers[key].getPosition());
+  	    		}
+  	    		map.fitBounds(bounds);
+//  	    		map.setCenter(bounds.getCenter());
+//  	    		if (map.getZoom()<12) map.setZoom(12);
+  	    	}
+  	    });
+    	  
+    	  setInterval(function(){refresh()},60000);
+    	  
+        
+    	  function refresh(){
+    		  $.ajax({
+    	  	    	url: "http://bobdole0.byethost16.com/googlemaps/gmap.php",
+    	  	    	type: 'get',
+    	  	        dataType: 'jsonp',
+    	  	    	data: {get: "locdata"},
+    	  	    	success: function(request){
+    	  	    		for(var key in request){
+    	  	    			if (key in markers){
+	    	  	    			var data=request[key];
+    	  	    				markers[key].setPosition(new google.maps.LatLng(data['lat'], data['lng']));
+    	  	    				infowindow[key].setContent(key + "<br>" + (new Date(data['time']*1000)).toLocaleString());
+    	  	    			}    	  	    			
+    	  	    			else{
+	    	  	    			var data=request[key];
+	    	  	    			addmarker(key,data);
+    	  	    			}
+    	  	    		}
+    	  	    	}
+    	  	    });
+    	  }
+      }
+      google.maps.event.addDomListener(window, 'load', initialize);
+      
+      
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"/>
+  </body>
+</html>
